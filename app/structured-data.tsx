@@ -41,7 +41,7 @@ export default function StructuredData() {
     ],
     description: {
       "@language": "zh",
-      "@value": "2025最新情侣飞行棋游戏全集，融合经典飞行棋+真心话大冒险+情趣挑战任务，支持手机版、电脑版免费在线玩，情侣互动游戏首选",
+      "@value": "飞行棋",
     },
     brand: {
       "@type": "Brand",

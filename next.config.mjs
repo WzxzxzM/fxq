@@ -13,6 +13,7 @@ const nextConfig = {
   // 基本SEO配置
   compress: true,
   poweredByHeader: false,
+
 }
 
 export default nextConfig

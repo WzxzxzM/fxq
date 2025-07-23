@@ -106,9 +106,9 @@
     "emptyQueue": "任务队列空了！休息一下吧！"
   },
   "tips": {
-    "twoPlayers": "两人轮流操作",
-    "faceToFace": "面对面互动",
-    "improveRelation": "增进感情"
+    "twoPlayers": "轮流操作",
+    "faceToFace": "互动交流",
+    "improveRelation": "层层递进"
   },
   "toast": {
     "redForward": "红方 前进 {steps} 格!",

@@ -11,6 +11,8 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+###
+#ENV HOST=0.0.0.0  
 
 # 1. 确保使用了 standalone 输出 (确保有 next.config.mjs)
 COPY --from=builder /app/next.config.mjs ./
