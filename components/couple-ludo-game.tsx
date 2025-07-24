@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createBoardPath, type PathCell } from "@/lib/game-config"
+import { interpolate } from "@/lib/utils"
 import {
   Rocket,
   Trophy,
