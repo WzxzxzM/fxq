@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+
+  basePath: '/fxqv0',
+
   output: "standalone",
   eslint: {
     ignoreDuringBuilds: true,
