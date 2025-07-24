@@ -134,9 +134,6 @@ export default function CoupleLudoGame() {
     const path = createBoardPath()
     setBoardPath(path)
 
-    // Load initial language
-    loadTranslations(language).then(setTranslations)
-    
     // Load custom modes from localStorage
     loadCustomModes()
   }, [])
@@ -164,37 +161,38 @@ export default function CoupleLudoGame() {
     }
   }, [])
 
-  // Load all tasks for selection
+
   const loadAllTasksForSelection = useCallback(async () => {
-    const modes: GameMode[] = ["normal", "love", "couple", "advanced", "intimate", "mixed"]
-    const tasks: Record<GameMode, string[]> = {} as Record<GameMode, string[]>
+    setIsLoadingTasks(true); // 可以在开始时设置加载状态
+    const modes: GameMode[] = ["normal", "love", "couple", "advanced", "intimate", "mixed"];
+    const tasks: Record<GameMode, string[]> = {} as Record<GameMode, string[]>;
     
     for (const mode of modes) {
       try {
-        let response = await fetch(`/tasks/${mode}-${language}.json`)
-        if (!response.ok && language !== "zh") {
-          response = await fetch(`/tasks/${mode}.json`)
-        }
+        // 直接请求中文任务文件
+        const response = await fetch(`/tasks/${mode}-zh.json`); 
         if (response.ok) {
-          tasks[mode] = await response.json()
+          tasks[mode] = await response.json();
         } else {
-          tasks[mode] = []
+          console.error(`Failed to load tasks for mode: ${mode}`);
+          tasks[mode] = [];
         }
       } catch (error) {
-        console.error(`Error loading tasks for ${mode}:`, error)
-        tasks[mode] = []
+        console.error(`Error loading tasks for ${mode}:`, error);
+        tasks[mode] = [];
       }
     }
     
-    setAvailableModeTasks(tasks)
-  }, [language])
+    setAvailableModeTasks(tasks);
+    setIsLoadingTasks(false); // 结束时取消加载状态
+  }, []); // 依赖项数组为空
 
   const loadTasks = useCallback(
     async (mode: GameMode) => {
       setIsLoadingTasks(true)
       try {
 
-        const response = await fetch(`/tasks/${mode}.json`);
+        const response = await fetch(`/tasks/${mode}-zh.json`);
 
         if (!response.ok) {
           throw new Error(`Failed to load tasks for mode: ${mode}`)
