@@ -17,36 +17,12 @@ export default function StructuredData() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: {
-      "@language": "zh",
-      "@value": "情侣飞行棋游戏全集",
-    },
-    alternateName: [
-      {
-        "@language": "zh",
-        "@value": "情侣飞行棋手机游戏",
-      },
-      {
-        "@language": "zh",
-        "@value": "情侣飞行棋在线游戏",
-      },
-      {
-        "@language": "en",
-        "@value": "Couple Flight Chess Game",
-      },
-      {
-        "@language": "ja",
-        "@value": "カップル飛行チェス",
-      },
-    ],
-    description: {
-      "@language": "zh",
-      "@value": "飞行棋",
-    },
+    name: "情侣飞行棋游戏全集",
+    alternateName: [ "情侣飞行棋手机游戏", "情侣飞行棋在线游戏" ],
+    description: "飞行棋",
     brand: {
       "@type": "Brand",
       name: "爱情飞行棋",
-      alternateName: ["Love Flight Chess", "ラブフライトチェス"],
     },
     category: "情侣桌游",
     url: "https://cpfly.top",
@@ -193,7 +169,7 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "情侣飞行棋游戏全集 - 爱情飞行棋",
-    alternateName: ["情侣飞行棋手机游戏", "情侣飞行棋在线游戏", "Couple Flight Chess Game", "カップル飛行チェス"],
+    alternateName: ["情侣飞行棋手机游戏", "情侣飞行棋在线游戏"],
     url: "https://cpfly.top",
     description: "2025最新情侣飞行棋游戏全集，融合经典飞行棋+真心话大冒险+情趣挑战任务，支持手机版、电脑版免费在线玩",
     potentialAction: {
@@ -208,7 +184,6 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "爱情飞行棋",
-    alternateName: ["Love Flight Chess", "ラブフライトチェス"],
     url: "https://cpfly.top",
     logo: "https://cpfly.top/images/logo.png",
     description: "专注于情侣互动游戏开发，致力于为情侣提供增进感情的创意游戏体验",
@@ -224,7 +199,7 @@ export default function StructuredData() {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "情侣飞行棋游戏全集",
-    alternateName: ["情侣飞行棋手机游戏", "情侣飞行棋在线游戏", "Couple Flight Chess Game"],
+    alternateName: ["情侣飞行棋手机游戏", "情侣飞行棋在线游戏"],
     url: "https://cpfly.top",
     description: "免费在线情侣互动游戏，支持手机版、电脑版，多种游戏模式任你选择",
     applicationCategory: "GameApplication",

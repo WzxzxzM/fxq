@@ -63,14 +63,7 @@ export const metadata: Metadata = {
       "fxq",
     images: ["https://cpfly.top/images/twitter-image.jpg"],
   },
-  alternates: {
-    canonical: "https://cpfly.top",
-    languages: {
-      "zh-CN": "https://cpfly.top",
-      en: "https://cpfly.top/en",
-      ja: "https://cpfly.top/ja",
-    },
-  },
+  canonical: "https://zzozz.xyz/fxq", // 可以将 canonical 移到顶层
   other: {
     "baidu-site-verification": "your-baidu-verification-code",
     "360-site-verification": "your-360-verification-code",

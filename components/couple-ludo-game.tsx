@@ -27,8 +27,7 @@ import {
   Check,
 } from "lucide-react"
 import type { JSX } from "react/jsx-runtime"
-import { type Language, type Translations, loadTranslations, interpolate } from "@/lib/i18n"
-import LanguageSelector from "./language-selector"
+import { translations, type Translations } from "@/lib/translations";
 
 type GameState = "start" | "playing" | "task" | "win" | "winTask" | "moving" | "customMode"
 type GameMode = "normal" | "love" | "couple" | "advanced" | "intimate" | "mixed" | "custom"
@@ -117,8 +116,6 @@ export default function CoupleLudoGame() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
   const [taskQueue, setTaskQueue] = useState<string[]>([])
   const [isLoadingTasks, setIsLoadingTasks] = useState(false)
-  const [language, setLanguage] = useState<Language>("zh")
-  const [translations, setTranslations] = useState<Translations | null>(null)
   const [winTaskOptions, setWinTaskOptions] = useState<WinTaskOption[]>([])
   const [selectedWinTask, setSelectedWinTask] = useState<WinTaskOption | null>(null)
   const [customModes, setCustomModes] = useState<CustomMode[]>([])
@@ -144,9 +141,6 @@ export default function CoupleLudoGame() {
     loadCustomModes()
   }, [])
 
-  useEffect(() => {
-    loadTranslations(language).then(setTranslations)
-  }, [language])
 
   // Load custom modes from localStorage
   const loadCustomModes = useCallback(() => {
@@ -196,16 +190,11 @@ export default function CoupleLudoGame() {
   }, [language])
 
   const loadTasks = useCallback(
-    async (mode: GameMode, lang: Language) => {
+    async (mode: GameMode) => {
       setIsLoadingTasks(true)
       try {
-        // Try to load language-specific tasks first
-        let response = await fetch(`/tasks/${mode}-${lang}.json`)
 
-        // If language-specific tasks don't exist, fall back to Chinese
-        if (!response.ok && lang !== "zh") {
-          response = await fetch(`/tasks/${mode}.json`)
-        }
+        const response = await fetch(`/tasks/${mode}.json`);
 
         if (!response.ok) {
           throw new Error(`Failed to load tasks for mode: ${mode}`)
@@ -215,21 +204,20 @@ export default function CoupleLudoGame() {
         setTaskQueue(shuffleArray(tasks))
       } catch (error) {
         console.error("Error loading tasks:", error)
-        const fallbackTasks = translations
-          ? [translations.tasks.emptyQueue]
-          : ["做一个鬼脸", "给对方一个赞美", "分享一个小秘密"]
+        
+        const fallbackTasks = [translations.tasks.emptyQueue];
         setTaskQueue(shuffleArray(fallbackTasks))
       } finally {
         setIsLoadingTasks(false)
       }
     },
-    [translations],
+    [],
   )
 
   const generateWinTasks = useCallback(() => {
     // 从当前任务队列中随机选择3个任务作为胜利任务选项
     const availableTasks = taskQueue.length > 0 ? taskQueue : [
-      translations?.tasks.emptyQueue || "给对方一个温暖的拥抱",
+      translations.tasks.emptyQueue || "给对方一个温暖的拥抱",
       "说出三个对方的优点",
       "一起做一件浪漫的事"
     ]
@@ -438,7 +426,7 @@ export default function CoupleLudoGame() {
   const triggerTask = (type: TaskType, PCOnCell: PlayerColor) => {
     if (taskQueue.length === 0) {
       console.warn("Task queue is empty!")
-      const emptyMessage = translations?.tasks.emptyQueue || "任务队列空了！休息一下吧！"
+      const emptyMessage = translations.tasks.emptyQueue || "任务队列空了！休息一下吧！"
       setCurrentTask({ description: emptyMessage, executor: PCOnCell, target: PCOnCell })
       setGameState("task")
       return
@@ -604,7 +592,7 @@ export default function CoupleLudoGame() {
         setTaskQueue([])
       }
     } else {
-      await loadTasks(mode, language)
+      await loadTasks(mode)
     }
   }
 
@@ -614,7 +602,7 @@ export default function CoupleLudoGame() {
       const customMode: CustomMode = {
         id: Date.now().toString(),
         name: newCustomMode.name.trim(),
-        description: newCustomMode.description.trim() || translations?.customMode.description || "自定义模式",
+        description: newCustomMode.description.trim() || translations.customMode.description || "自定义模式",
         tasks: [...newCustomMode.tasks],
         createdAt: Date.now(),
       }
@@ -628,7 +616,7 @@ export default function CoupleLudoGame() {
       setManualTask('')
       setShowCustomModeCreator(false)
       
-      showToast(translations?.customMode.messages.createSuccess || "自定义模式创建成功！", "success")
+      showToast(translations.customMode.messages.createSuccess || "自定义模式创建成功！", "success")
     }
   }, [newCustomMode, customModes, saveCustomModes, translations])
 
@@ -636,7 +624,7 @@ export default function CoupleLudoGame() {
   const deleteCustomMode = useCallback((modeId: string) => {
     const updatedModes = customModes.filter(mode => mode.id !== modeId)
     saveCustomModes(updatedModes)
-    showToast(translations?.customMode.messages.deleteSuccess || "自定义模式已删除", "success")
+    showToast(translations.customMode.messages.deleteSuccess || "自定义模式已删除", "success")
   }, [customModes, saveCustomModes, translations])
 
   // Add task from mode selection
@@ -692,13 +680,6 @@ export default function CoupleLudoGame() {
     setShowCustomModeCreator(false)
   }
 
-  const handleLanguageChange = async (newLanguage: Language) => {
-    setLanguage(newLanguage)
-    // Reload tasks if game is in progress
-    if (gameState !== "start" && gameMode) {
-      await loadTasks(gameMode, newLanguage)
-    }
-  }
 
   const renderBoard = () => {
     if (!translations) return null
@@ -821,12 +802,6 @@ export default function CoupleLudoGame() {
                 <div className="game-title-main">{translations.game.title}</div>
                 <div className="game-subtitle-main">{translations.game.subtitle}</div>
                 <div className="title-language-selector">
-                  <LanguageSelector 
-                    currentLanguage={language} 
-                    onLanguageChange={handleLanguageChange} 
-                    showGithub={true}
-                    className="title"
-                  />
                 </div>
               </div>
             </div>
@@ -1111,7 +1086,6 @@ export default function CoupleLudoGame() {
               : translations.modes[gameMode].name
           }
         </span>
-        <LanguageSelector currentLanguage={language} onLanguageChange={handleLanguageChange} />
       </div>
       <div className="content">
         <div className={`turn-indicator ${currentPlayer}`}>

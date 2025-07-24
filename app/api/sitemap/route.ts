@@ -50,8 +50,7 @@ export async function GET() {
 
   // 生成XML内容
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map(page => {
   const mainUrl = page.url === '/' ? '' : page.url
   
@@ -60,27 +59,9 @@ ${pages.map(page => {
     <lastmod>${page.lastModified}</lastmod>
     <changefreq>${page.changeFrequency}</changefreq>
     <priority>${page.priority}</priority>
-${page.languages.map(lang => {
-  const langUrl = lang === 'zh' ? mainUrl : `/${lang}${mainUrl}`
-  return `    <xhtml:link rel="alternate" hreflang="${lang}" href="${baseUrl}${langUrl}" />`
-}).join('\n')}
-  </url>
-${page.languages.filter(lang => lang !== 'zh').map(lang => {
-  const langUrl = `/${lang}${mainUrl}`
-  return `  <url>
-    <loc>${baseUrl}${langUrl}</loc>
-    <lastmod>${page.lastModified}</lastmod>
-    <changefreq>${page.changeFrequency}</changefreq>
-    <priority>${page.priority}</priority>
-${page.languages.map(altLang => {
-  const altUrl = altLang === 'zh' ? mainUrl : `/${altLang}${mainUrl}`
-  return `    <xhtml:link rel="alternate" hreflang="${altLang}" href="${baseUrl}${altUrl}" />`
-}).join('\n')}
   </url>`
-}).join('\n')}`
 }).join('\n')}
 </urlset>`
-
   return new Response(sitemap, {
     headers: {
       'Content-Type': 'application/xml',
