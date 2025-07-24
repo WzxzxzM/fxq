@@ -118,25 +118,25 @@ export default function SEOContent() {
 
       {/* 平台支持信息 */}
       <section className="platform-support">
-        <h2>多平台支持 - 随时随地畅玩波波飞行棋游戏</h2>
+        <h2>多平台支持 </h2>
         <div className="platform-grid">
           <div className="platform-card">
             <Smartphone className="platform-icon" />
-            <h3>手机版情侣游戏</h3>
-            <p>支持iOS和Android系统，波波飞行棋手机游戏体验流畅，随时随地开启甜蜜互动时光。</p>
+            <h3>游戏</h3>
+            <p>支持N多系统，v1版本开始体验流畅。</p>
           </div>
           <div className="platform-card">
             <Monitor className="platform-icon" />
-            <h3>电脑版在线游戏</h3>
-            <p>支持Windows、Mac系统浏览器，波波飞行棋在线游戏画面更大，操作更便捷。</p>
+            <h3>在线游戏</h3>
+            <p>嘿嘿</p>
           </div>
         </div>
       </section>
       
       {/* 立即开始游戏的引导 */}
       <section className="cta-section">
-        <h2>立即开始你们的波波飞行棋游戏之旅！</h2>
-        <p>无需下载，无需注册，点击开始即可享受最火爆的情侣互动游戏体验！</p>
+        <h2>xxx</h2>
+        <p>嘿嘿</p>
         <div className="cta-buttons">
           <button className="cta-primary">开始游戏</button>
           <button className="cta-secondary">了解更多</button>
