@@ -8,8 +8,6 @@ import {
   Trophy,
   Star,
   Bomb,
-  Plane,
-  BirdIcon as Helicopter,
   Heart,
   Sparkles,
   CheckCircle,
@@ -32,8 +30,10 @@ import { translations, type Translations } from "@/lib/translations";
 
 type GameState = "start" | "playing" | "task" | "win" | "winTask" | "moving" | "customMode"
 type GameMode = "normal" | "love" | "couple" | "advanced" | "intimate" | "mixed" | "custom"
-type PlayerColor = "red" | "blue"
+type PlayerColor = "red" | "blue" | "orange" | "purple"
 type TaskType = "star" | "trap" | "collision"
+
+const playerOrder: PlayerColor[] = ["red", "blue", "orange", "purple"];
 
 interface CurrentTask {
   description: string
@@ -93,8 +93,8 @@ const gameModeColors = {
 
 const gameModeEmojis = {
   normal: "😊",
-  love: "💕",
-  couple: "💖",
+  love: "💖",
+  couple: "❤️‍🩹",
   advanced: "🔥",
   intimate: "🔒",
   mixed: "🎲",
@@ -108,6 +108,8 @@ export default function CoupleLudoGame() {
   const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>("red")
   const [redPosition, setRedPosition] = useState(0)
   const [bluePosition, setBluePosition] = useState(0)
+  const [orangePosition, setOrangePosition] = useState(0)
+  const [purplePosition, setPurplePosition] = useState(0)
   const [diceValue, setDiceValue] = useState<number | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [currentTask, setCurrentTask] = useState<CurrentTask | null>(null)
@@ -122,14 +124,32 @@ export default function CoupleLudoGame() {
   const [customModes, setCustomModes] = useState<CustomMode[]>([])
   const [currentCustomMode, setCurrentCustomMode] = useState<CustomMode | null>(null)
   const [showCustomModeCreator, setShowCustomModeCreator] = useState(false)
-  const [newCustomMode, setNewCustomMode] = useState<{ name: string; description: string; tasks: string[] }>({ 
-    name: '', 
-    description: '', 
-    tasks: [] 
+  const [newCustomMode, setNewCustomMode] = useState<{ name: string; description: string; tasks: string[] }>({
+    name: '',
+    description: '',
+    tasks: []
   })
   const [availableModeTasks, setAvailableModeTasks] = useState<Record<GameMode, string[]>>({} as Record<GameMode, string[]>)
   const [selectedTasks, setSelectedTasks] = useState<{ [key: string]: boolean }>({})
   const [manualTask, setManualTask] = useState('')
+
+  const getPlayerPosition = useCallback((player: PlayerColor) => {
+    switch (player) {
+      case "red": return redPosition;
+      case "blue": return bluePosition;
+      case "orange": return orangePosition;
+      case "purple": return purplePosition;
+    }
+  }, [redPosition, bluePosition, orangePosition, purplePosition]);
+
+  const setPlayerPosition = (player: PlayerColor, position: number) => {
+    switch (player) {
+      case "red": setRedPosition(position); break;
+      case "blue": setBluePosition(position); break;
+      case "orange": setOrangePosition(position); break;
+      case "purple": setPurplePosition(position); break;
+    }
+  };
 
   useEffect(() => {
     const path = createBoardPath()
@@ -157,7 +177,7 @@ export default function CoupleLudoGame() {
     try {
       localStorage.setItem('customModes', JSON.stringify(modes))
       setCustomModes(modes)
-    } catch (error) {
+    } catch (error)      {
       console.error('Error saving custom modes:', error)
     }
   }, [])
@@ -167,11 +187,11 @@ export default function CoupleLudoGame() {
     setIsLoadingTasks(true); // 可以在开始时设置加载状态
     const modes: GameMode[] = ["normal", "love", "couple", "advanced", "intimate", "mixed"];
     const tasks: Record<GameMode, string[]> = {} as Record<GameMode, string[]>;
-    
+
     for (const mode of modes) {
       try {
         // 直接请求中文任务文件
-        const response = await fetch(`/tasks/${mode}-zh.json`); 
+        const response = await fetch(`/tasks/${mode}-zh.json`);
         if (response.ok) {
           tasks[mode] = await response.json();
         } else {
@@ -183,7 +203,7 @@ export default function CoupleLudoGame() {
         tasks[mode] = [];
       }
     }
-    
+
     setAvailableModeTasks(tasks);
     setIsLoadingTasks(false); // 结束时取消加载状态
   }, []); // 依赖项数组为空
@@ -203,7 +223,7 @@ export default function CoupleLudoGame() {
         setTaskQueue(shuffleArray(tasks))
       } catch (error) {
         console.error("Error loading tasks:", error)
-        
+
         const fallbackTasks = [translations.tasks.emptyQueue];
         setTaskQueue(shuffleArray(fallbackTasks))
       } finally {
@@ -216,37 +236,75 @@ export default function CoupleLudoGame() {
   const generateWinTasks = useCallback(() => {
     // 从当前任务队列中随机选择3个任务作为胜利任务选项
     const availableTasks = taskQueue.length > 0 ? taskQueue : [
-      translations.tasks.emptyQueue || "给对方一个温暖的拥抱",
-      "说出三个对方的优点",
-      "一起做一件浪漫的事"
+      translations.tasks.emptyQueue || "给对方温暖的拥抱和亲吻",
+      "脱光对方的衣服",
+      "抚摸异性90秒"
     ]
-    
+
     const shuffled = shuffleArray([...availableTasks])
     const winTasks: WinTaskOption[] = shuffled.slice(0, 3).map((task, index) => ({
       id: index + 1,
       description: task
     }))
-    
+
     setWinTaskOptions(winTasks)
   }, [taskQueue, translations])
 
   const switchTurn = useCallback(() => {
-    setCurrentPlayer((prev) => (prev === "red" ? "blue" : "red"))
+    setCurrentPlayer((prev) => {
+        const currentIndex = playerOrder.indexOf(prev);
+        const nextIndex = (currentIndex + 1) % playerOrder.length;
+        return playerOrder[nextIndex];
+    });
   }, [])
+
+  // 新的幸运星配对逻辑
+  const getStarEventPartner = (player: PlayerColor): PlayerColor => {
+      switch(player) {
+          case "red": return "purple";
+          case "purple": return "red";
+          case "blue": return "orange";
+          case "orange": return "blue";
+      }
+  }
+  
+  // 新的碰撞目标逻辑
+  const getCollisionTarget = (attacker: PlayerColor): PlayerColor => {
+    switch (attacker) {
+      case "red": return "blue";
+      case "blue": return "red";
+      case "orange": return "purple";
+      case "purple": return "orange"; // 闭环逻辑
+    }
+  };
+
 
   const checkSpecialEvents = useCallback(
     (newPosition: number, player: PlayerColor) => {
       setIsMoving(false)
       setGameState("playing")
 
-      const otherPlayerPosition = player === "red" ? bluePosition : redPosition
+      // 碰撞检查
+      const collisionTarget = getCollisionTarget(player);
+      const targetPosition = getPlayerPosition(collisionTarget);
 
-      if (newPosition === otherPlayerPosition && newPosition !== 0 && newPosition !== boardPath.length - 1) {
-        setTimeout(() => {
-          setTaskType("collision")
-          triggerTask("collision", player)
-        }, 300)
-        return
+      if (newPosition === targetPosition && newPosition > 0 && newPosition < boardPath.length - 1) {
+          setTimeout(() => {
+              if (taskQueue.length === 0) {
+                  console.warn("Task queue is empty for collision!");
+                  switchTurn();
+                  return;
+              }
+              setTaskType("collision");
+              setCurrentTask({
+                  description: taskQueue[0],
+                  executor: collisionTarget, // 防守方 (被碰撞的玩家) 执行任务
+                  target: player,           // 进攻方 (当前移动的玩家) 是任务目标
+              });
+              setTaskQueue((prev) => [...prev.slice(1), prev[0]]);
+              setGameState("task");
+          }, 300);
+          return; // 发生碰撞，流程结束
       }
 
       // 只有正好到达终点才获胜
@@ -261,21 +319,37 @@ export default function CoupleLudoGame() {
       }
 
       const cellType = boardPath[newPosition]?.type
-      if (cellType === "star") {
-        setTimeout(() => {
-          setTaskType("star")
-          triggerTask("star", player)
-        }, 300)
-      } else if (cellType === "trap") {
-        setTimeout(() => {
-          setTaskType("trap")
-          triggerTask("trap", player)
-        }, 300)
+      if (cellType === "star" || cellType === "trap") {
+          setTimeout(() => {
+              if (taskQueue.length === 0) {
+                  console.warn(`Task queue is empty for ${cellType}!`);
+                  switchTurn();
+                  return;
+              }
+              const task = taskQueue[0];
+              setTaskQueue((prev) => [...prev.slice(1), prev[0]]);
+
+              setTaskType(cellType);
+              if (cellType === 'star') {
+                  setCurrentTask({
+                      description: task,
+                      executor: getStarEventPartner(player), // 配对玩家执行
+                      target: player,
+                  });
+              } else { // trap
+                  setCurrentTask({
+                      description: task,
+                      executor: player, // 降落的玩家自己执行
+                      target: player,
+                  });
+              }
+              setGameState("task");
+          }, 300);
       } else {
-        setTimeout(switchTurn, 300)
+        setTimeout(switchTurn, 300);
       }
     },
-    [boardPath, bluePosition, redPosition, switchTurn, generateWinTasks],
+    [boardPath, getPlayerPosition, switchTurn, generateWinTasks, taskQueue],
   )
 
   // 处理胜利任务选择
@@ -301,7 +375,7 @@ export default function CoupleLudoGame() {
 
   const movePlayerStep = useCallback(
     (targetPosition: number, player: PlayerColor, currentStepPos?: number) => {
-      const startPosition = currentStepPos ?? (player === "red" ? redPosition : bluePosition)
+      const startPosition = currentStepPos ?? getPlayerPosition(player);
 
       if (startPosition >= targetPosition) {
         checkSpecialEvents(targetPosition, player)
@@ -309,21 +383,20 @@ export default function CoupleLudoGame() {
       }
 
       const nextPosition = startPosition + 1
-      if (player === "red") setRedPosition(nextPosition)
-      else setBluePosition(nextPosition)
+      setPlayerPosition(player, nextPosition);
 
       setTimeout(() => movePlayerStep(targetPosition, player, nextPosition), 300)
     },
-    [redPosition, bluePosition, checkSpecialEvents],
+    [getPlayerPosition, checkSpecialEvents],
   )
 
   const movePlayerToEndAndBack = useCallback(
     (endPosition: number, finalPosition: number, player: PlayerColor, totalSteps: number) => {
-      const startPosition = player === "red" ? redPosition : bluePosition
+      const startPosition = getPlayerPosition(player);
       let currentStep = 0
       let currentPos = startPosition
       let hasReachedEnd = false
-      
+
       const step = () => {
         if (currentStep >= totalSteps) {
           // 移动完成，检查最终位置
@@ -341,9 +414,9 @@ export default function CoupleLudoGame() {
           }
           return
         }
-        
+
         currentStep++
-        
+
         // 先向终点移动
         if (!hasReachedEnd) {
           currentPos++
@@ -357,21 +430,20 @@ export default function CoupleLudoGame() {
             currentPos--
           }
         }
-        
-        if (player === "red") setRedPosition(currentPos)
-        else setBluePosition(currentPos)
-        
+
+        setPlayerPosition(player, currentPos);
+
         setTimeout(step, 300)
       }
-      
+
       step()
     },
-    [redPosition, bluePosition, checkSpecialEvents, generateWinTasks],
+    [getPlayerPosition, checkSpecialEvents, generateWinTasks],
   )
 
   const movePlayer = useCallback(
     (steps: number) => {
-      const currentPos = currentPlayer === "red" ? redPosition : bluePosition
+      const currentPos = getPlayerPosition(currentPlayer);
       const maxPosition = boardPath.length - 1
       let targetPosition = currentPos + steps
 
@@ -388,7 +460,7 @@ export default function CoupleLudoGame() {
           const finalPosition = maxPosition - overshoot
           // 确保不会退到负数位置
           const safePosition = Math.max(0, finalPosition)
-          
+
           setIsMoving(true)
           setGameState("moving")
           movePlayerToEndAndBack(maxPosition, safePosition, currentPlayer, steps)
@@ -400,7 +472,7 @@ export default function CoupleLudoGame() {
         movePlayerStep(targetPosition, currentPlayer)
       }
     },
-    [currentPlayer, redPosition, bluePosition, boardPath.length, movePlayerStep, movePlayerToEndAndBack],
+    [currentPlayer, getPlayerPosition, boardPath.length, movePlayerStep, movePlayerToEndAndBack],
   )
 
   const rollDice = () => {
@@ -422,31 +494,6 @@ export default function CoupleLudoGame() {
     }, 80)
   }
 
-  const triggerTask = (type: TaskType, PCOnCell: PlayerColor) => {
-    if (taskQueue.length === 0) {
-      console.warn("Task queue is empty!")
-      const emptyMessage = translations.tasks.emptyQueue || "任务队列空了！休息一下吧！"
-      setCurrentTask({ description: emptyMessage, executor: PCOnCell, target: PCOnCell })
-      setGameState("task")
-      return
-    }
-
-    const currentTaskDescription = taskQueue[0]
-    setTaskQueue((prev) => [...prev.slice(1), prev[0]])
-
-    let executor: PlayerColor
-    if (type === "star") {
-      executor = PCOnCell === "red" ? "blue" : "red"
-    } else if (type === "trap") {
-      executor = PCOnCell
-    } else {
-      executor = PCOnCell === "red" ? "blue" : "red"
-    }
-
-    setCurrentTask({ description: currentTaskDescription, executor, target: PCOnCell })
-    setGameState("task")
-  }
-
   const animateTaskOutcomeMove = useCallback(
     (targetPosition: number, player: PlayerColor, originalPosition: number) => {
       setIsMoving(true)
@@ -464,6 +511,7 @@ export default function CoupleLudoGame() {
           // 只有正好到达终点才获胜
           if (targetPosition === boardPath.length - 1) {
             setWinner(player)
+            generateWinTasks();
             setGameState("win")
           } else {
             switchTurn()
@@ -472,101 +520,86 @@ export default function CoupleLudoGame() {
         }
 
         currentAnimatedPos += targetPosition > currentAnimatedPos ? 1 : -1
-
-        if (player === "red") setRedPosition(currentAnimatedPos)
-        else setBluePosition(currentAnimatedPos)
+        setPlayerPosition(player, currentAnimatedPos);
 
         setTimeout(step, 300)
       }
       step()
     },
-    [boardPath.length, switchTurn],
+    [boardPath.length, switchTurn, generateWinTasks],
   )
 
   const handleTaskComplete = (isCompleted: boolean) => {
     if (!currentTask || !translations) return
 
-    const activePlayer = currentTask.executor
-    const currentPosition = activePlayer === "red" ? redPosition : bluePosition
-    const maxPosition = boardPath.length - 1
-    let finalPosition = currentPosition
-    let toastMessage = ""
-    let toastType: "success" | "error" = "success"
+    const { executor } = currentTask;
+    const maxPosition = boardPath.length - 1;
+    let toastMessage = "";
+    let toastType: "success" | "error" = "success";
 
     if (taskType === "star" || taskType === "trap") {
-      const rewardSteps = Math.floor(Math.random() * 4) // 0-3格
-      const penaltySteps = Math.floor(Math.random() * 4) + 3 // 3-6格
+        const activePlayer = executor;
+        const currentPosition = getPlayerPosition(activePlayer);
+        let finalPosition = currentPosition;
 
-      if (isCompleted) {
-        let newPosition = currentPosition + rewardSteps
-        // 处理超出终点的反弹
-        if (newPosition > maxPosition) {
-          const overshoot = newPosition - maxPosition
-          newPosition = maxPosition - overshoot
-          newPosition = Math.max(0, newPosition)
-        }
-        finalPosition = newPosition
+        const rewardSteps = Math.floor(Math.random() * 4) // 0-3格
+        const penaltySteps = Math.floor(Math.random() * 4) + 3 // 3-6格
 
-        if (rewardSteps === 0) {
-          toastMessage = activePlayer === "red" ? translations.toast.redStay : translations.toast.blueStay
+        if (isCompleted) {
+            let newPosition = currentPosition + rewardSteps
+            if (newPosition > maxPosition) {
+                const overshoot = newPosition - maxPosition
+                newPosition = maxPosition - overshoot
+            }
+            finalPosition = Math.max(0, newPosition);
+
+            if (rewardSteps === 0) {
+                 toastMessage = (translations.toast as any)[`${activePlayer}Stay`] || `${activePlayer} stays.`;
+            } else {
+                const template = (translations.toast as any)[`${activePlayer}Forward`]
+                toastMessage = interpolate(template, { steps: rewardSteps.toString() })
+            }
+            toastType = "success"
         } else {
-          const template = activePlayer === "red" ? translations.toast.redForward : translations.toast.blueForward
-          toastMessage = interpolate(template, { steps: rewardSteps.toString() })
+            finalPosition = Math.max(currentPosition - penaltySteps, 0)
+            const template = (translations.toast as any)[`${activePlayer}Backward`]
+            toastMessage = interpolate(template, { steps: penaltySteps.toString() })
+            toastType = "error"
         }
-        toastType = "success"
-      } else {
-        finalPosition = Math.max(currentPosition - penaltySteps, 0)
-        const template = activePlayer === "red" ? translations.toast.redBackward : translations.toast.blueBackward
-        toastMessage = interpolate(template, { steps: penaltySteps.toString() })
-        toastType = "error"
-      }
+
+        setToast({ message: toastMessage, type: toastType })
+        setTimeout(() => setToast(null), 3000)
+
+        if (finalPosition !== currentPosition) {
+            animateTaskOutcomeMove(finalPosition, activePlayer, currentPosition)
+        } else {
+             setCurrentTask(null);
+             setTaskType(null);
+             setGameState("playing");
+             switchTurn();
+        }
+
     } else if (taskType === "collision") {
-      const executorPlayer = currentTask.executor
-      if (!isCompleted) {
-        if (executorPlayer === "red") {
-          setRedPosition(0)
-          toastMessage = translations.toast.redFailedToStart
-        } else {
-          setBluePosition(0)
-          toastMessage = translations.toast.blueFailedToStart
+        const defender = executor; // The one who was hit and had to execute the task
+
+        if (!isCompleted) { // Defender FAILED the task
+            setPlayerPosition(defender, 0); // Defender is sent back to start
+            const template = (translations.toast as any)[`${defender}FailedToStart`];
+            toastMessage = template;
+            toastType = "error"
+        } else { // Defender SUCCEEDED
+            const template = (translations.toast as any)[`${defender}Completed`];
+            toastMessage = template;
+            toastType = "success"
         }
-        toastType = "error"
-        setCurrentTask(null)
-        setTaskType(null)
+
         setToast({ message: toastMessage, type: toastType })
         setTimeout(() => setToast(null), 3000)
+        setCurrentTask(null)
+        setTaskType(null)
         setGameState("playing")
         switchTurn()
         return
-      } else {
-        toastMessage = executorPlayer === "red" ? translations.toast.redCompleted : translations.toast.blueCompleted
-        toastType = "success"
-        setCurrentTask(null)
-        setTaskType(null)
-        setToast({ message: toastMessage, type: toastType })
-        setTimeout(() => setToast(null), 3000)
-        setGameState("playing")
-        switchTurn()
-        return
-      }
-    }
-
-    setToast({ message: toastMessage, type: toastType })
-    setTimeout(() => setToast(null), 3000)
-
-    if (finalPosition !== currentPosition && (taskType === "star" || taskType === "trap")) {
-      animateTaskOutcomeMove(finalPosition, activePlayer, currentPosition)
-    } else {
-      setCurrentTask(null)
-      setTaskType(null)
-      setGameState("playing")
-      // 只有正好到达终点才获胜
-      if (finalPosition === maxPosition && (taskType === "star" || taskType === "trap")) {
-        setWinner(activePlayer)
-        setGameState("win")
-      } else {
-        switchTurn()
-      }
     }
   }
 
@@ -576,6 +609,8 @@ export default function CoupleLudoGame() {
     setCurrentPlayer("red")
     setRedPosition(0)
     setBluePosition(0)
+    setOrangePosition(0)
+    setPurplePosition(0)
     setDiceValue(null)
     setIsRolling(false)
     setIsMoving(false)
@@ -583,7 +618,7 @@ export default function CoupleLudoGame() {
     setTaskType(null)
     setWinner(null)
     setToast(null)
-    
+
     if (mode === "custom") {
       if (currentCustomMode && currentCustomMode.tasks.length > 0) {
         setTaskQueue(shuffleArray([...currentCustomMode.tasks]))
@@ -605,16 +640,16 @@ export default function CoupleLudoGame() {
         tasks: [...newCustomMode.tasks],
         createdAt: Date.now(),
       }
-      
+
       const updatedModes = [...customModes, customMode]
       saveCustomModes(updatedModes)
-      
+
       // Reset form
       setNewCustomMode({ name: '', description: '', tasks: [] })
       setSelectedTasks({})
       setManualTask('')
       setShowCustomModeCreator(false)
-      
+
       showToast(translations.customMode.messages.createSuccess || "自定义模式创建成功！", "success")
     }
   }, [newCustomMode, customModes, saveCustomModes, translations])
@@ -668,6 +703,8 @@ export default function CoupleLudoGame() {
     setCurrentPlayer("red")
     setRedPosition(0)
     setBluePosition(0)
+    setOrangePosition(0)
+    setPurplePosition(0)
     setDiceValue(null)
     setIsRolling(false)
     setIsMoving(false)
@@ -688,10 +725,14 @@ export default function CoupleLudoGame() {
     const cellElements: { [key: string]: JSX.Element } = {}
 
     boardPath.forEach((pathCell) => {
-      const isRedOnCell = redPosition === pathCell.id
-      const isBlueOnCell = bluePosition === pathCell.id
-      const areBothOnCell = isRedOnCell && isBlueOnCell
-      const playerIconSize = areBothOnCell ? 18 : 24
+      const playersOnCell: PlayerColor[] = [];
+      if (redPosition === pathCell.id) playersOnCell.push('red');
+      if (bluePosition === pathCell.id) playersOnCell.push('blue');
+      if (orangePosition === pathCell.id) playersOnCell.push('orange');
+      if (purplePosition === pathCell.id) playersOnCell.push('purple');
+
+      const areMultipleOnCell = playersOnCell.length > 1
+      const playerIconSize = areMultipleOnCell ? 20 : 28 // 调整图标大小以容纳更多
 
       cellElements[`${pathCell.y}-${pathCell.x}`] = (
         <div key={`${pathCell.y}-${pathCell.x}`} className={`cell ${pathCell.type}`}>
@@ -718,20 +759,24 @@ export default function CoupleLudoGame() {
           )}
           {pathCell.type === "path" && <div className="cell-icon-text">•</div>}
 
-          {isRedOnCell && (
-            <div
-              className={`player red ${currentPlayer === "red" ? "current-turn" : ""} ${areBothOnCell ? "stacked" : ""} ${isMoving && currentPlayer === "red" ? "moving" : ""}`}
-            >
-              <Plane size={playerIconSize} />
-            </div>
-          )}
-          {isBlueOnCell && (
-            <div
-              className={`player blue ${currentPlayer === "blue" ? "current-turn" : ""} ${areBothOnCell ? "stacked" : ""} ${isMoving && currentPlayer === "blue" ? "moving" : ""}`}
-            >
-              <Helicopter size={playerIconSize} />
-            </div>
-          )}
+          {playersOnCell.map((pColor) => {
+              // 新的棋子图标，使用 Emoji
+              const icons: Record<PlayerColor, React.ReactNode> = {
+                  red: <span style={{ fontSize: `${playerIconSize}px`, lineHeight: '1' }}>🍎</span>,
+                  blue: <span style={{ fontSize: `${playerIconSize}px`, lineHeight: '1' }}>🍆</span>,
+                  orange: <span style={{ fontSize: `${playerIconSize}px`, lineHeight: '1' }}>🐱</span>,
+                  purple: <span style={{ fontSize: `${playerIconSize}px`, lineHeight: '1' }}>🐻</span>,
+              };
+
+              return (
+                  <div
+                    key={pColor}
+                    className={`player ${pColor} ${currentPlayer === pColor ? "current-turn" : ""} ${areMultipleOnCell ? "stacked" : ""} ${isMoving && currentPlayer === pColor ? "moving" : ""}`}
+                  >
+                    {icons[pColor]}
+                  </div>
+              )
+          })}
         </div>
       )
     })
@@ -841,7 +886,7 @@ export default function CoupleLudoGame() {
                 </div>
               )
             })}
-            
+
             {/* 已创建的自定义模式卡片 */}
             {customModes.map((mode) => (
               <div
@@ -872,7 +917,7 @@ export default function CoupleLudoGame() {
                 </div>
               </div>
             ))}
-            
+
             {/* 创建自定义模式卡片 */}
             <div
               className="mode-card"
@@ -892,15 +937,15 @@ export default function CoupleLudoGame() {
           <div className="game-tips">
             <div className="tip-item">
               <Users size={18} />
-              <span>{translations.tips.twoPlayers}</span>
+              <span>轮流操作</span>
             </div>
             <div className="tip-item">
               <Heart size={18} />
-              <span>{translations.tips.faceToFace}</span>
+              <span>互动交流</span>
             </div>
             <div className="tip-item">
               <Sparkles size={18} />
-              <span>{translations.tips.improveRelation}</span>
+              <span>层层递进</span>
             </div>
           </div>
 
@@ -910,7 +955,7 @@ export default function CoupleLudoGame() {
               <div className="custom-mode-creator">
                 <div className="creator-header">
                   <h2>{translations.customMode.creator.title}</h2>
-                  <button 
+                  <button
                     className="close-creator"
                     onClick={() => {
                       setShowCustomModeCreator(false)
@@ -951,18 +996,18 @@ export default function CoupleLudoGame() {
                   {/* 任务选择 */}
                   <div className="task-selection-section">
                     <h3>{translations.customMode.creator.taskSelection}</h3>
-                    
+
                     {/* 从组合模式中选择 */}
                     <div className="mode-task-selection">
                       <h4>{translations.customMode.creator.fromExistingModes}</h4>
-                      <button 
+                      <button
                         className="load-tasks-btn"
                         onClick={loadAllTasksForSelection}
                         disabled={isLoadingTasks}
                       >
                         {isLoadingTasks ? translations.customMode.creator.loading : translations.customMode.creator.loadTasks}
                       </button>
-                      
+
                       {Object.keys(availableModeTasks).length > 0 && (
                         <div className="mode-tasks-grid">
                           {(["normal", "love", "couple", "advanced", "intimate", "mixed"] as GameMode[]).map((mode) => (
@@ -972,7 +1017,7 @@ export default function CoupleLudoGame() {
                               </h5>
                               <div className="tasks-list">
                                 {availableModeTasks[mode]?.map((task, index) => (
-                                  <div 
+                                  <div
                                     key={`${mode}-${index}`}
                                     className={`task-item ${newCustomMode.tasks.includes(task) ? 'selected' : ''}`}
                                     onClick={() => {
@@ -1013,7 +1058,7 @@ export default function CoupleLudoGame() {
                             }
                           }}
                         />
-                        <button 
+                        <button
                           onClick={addManualTask}
                           disabled={!manualTask.trim() || newCustomMode.tasks.includes(manualTask.trim())}
                         >
@@ -1030,7 +1075,7 @@ export default function CoupleLudoGame() {
                           <div key={index} className="selected-task-item">
                             <span className="task-number">{index + 1}.</span>
                             <span className="task-text">{task}</span>
-                            <button 
+                            <button
                               onClick={() => removeTaskFromCustomMode(index)}
                               className="remove-task"
                             >
@@ -1044,7 +1089,7 @@ export default function CoupleLudoGame() {
                 </div>
 
                 <div className="creator-actions">
-                  <button 
+                  <button
                     className="create-btn"
                     onClick={createCustomMode}
                     disabled={!newCustomMode.name.trim() || newCustomMode.tasks.length === 0}
@@ -1052,7 +1097,7 @@ export default function CoupleLudoGame() {
                     <Save size={16} />
                     {translations.customMode.creator.createButton}
                   </button>
-                  <button 
+                  <button
                     className="cancel-btn"
                     onClick={() => {
                       setShowCustomModeCreator(false)
@@ -1072,6 +1117,20 @@ export default function CoupleLudoGame() {
     )
   }
 
+  const turnIndicatorText: Record<PlayerColor, string> = {
+    red: (translations.game as any).redTurn,
+    blue: (translations.game as any).blueTurn,
+    orange: (translations.game as any).orangeTurn,
+    purple: (translations.game as any).purpleTurn,
+  };
+
+  const winTitleText: Record<PlayerColor, string> = {
+      red: translations.game.redWin,
+      blue: translations.game.blueWin,
+      orange: (translations.game as any).orangeWin,
+      purple: (translations.game as any).purpleWin,
+  };
+
   return (
     <div className={`game-container ${currentPlayer}-turn`}>
       <div className={`header ${currentPlayer}-turn`}>
@@ -1080,7 +1139,7 @@ export default function CoupleLudoGame() {
         </button>
         <span className="header-title">
           {translations.game.title} - {
-            gameMode === "custom" 
+            gameMode === "custom"
               ? (currentCustomMode?.name || "自定义模式")
               : translations.modes[gameMode].name
           }
@@ -1088,12 +1147,12 @@ export default function CoupleLudoGame() {
       </div>
       <div className="content">
         <div className={`turn-indicator ${currentPlayer}`}>
-          {currentPlayer === "red" ? translations.game.redTurn : translations.game.blueTurn}
+            {turnIndicatorText[currentPlayer]}
         </div>
         <div className={`dice-area ${currentPlayer}-turn`}>
           <div className={`dice ${currentPlayer}-turn`}>{diceValue ?? "?"}</div>
           <button
-            className={`button ${currentPlayer === "blue" ? "blue" : ""}`}
+            className={`button ${currentPlayer}-turn`}
             onClick={rollDice}
             disabled={isRolling || isMoving || gameState === "task" || isLoadingTasks}
           >
@@ -1125,7 +1184,7 @@ export default function CoupleLudoGame() {
                     : translations.tasks.collisionTask}
               </div>
               <div className={`executor ${currentTask.executor}`}>
-                {currentTask.executor === "red" ? translations.tasks.redExecute : translations.tasks.blueExecute}
+                {(translations.tasks as any)[`${currentTask.executor}Execute`]}
               </div>
               <div className="task-description">{currentTask.description}</div>
               <div className="task-rewards">
@@ -1176,11 +1235,11 @@ export default function CoupleLudoGame() {
                 <Trophy size={60} />
               </div>
               <h1 className="win-title">
-                🎉 {winner === "red" ? translations.game.redWin : translations.game.blueWin} 🎉
+                🎉 {winTitleText[winner]} 🎉
               </h1>
               <p className="win-subtitle">{translations.game.selectWinTask || "选择一个胜利任务来庆祝吧！"}</p>
             </div>
-            
+
             <div className="win-tasks-container">
               <h3 className="tasks-title">{translations.game.winTasksTitle || "胜利任务选择"}</h3>
               <div className="win-tasks-grid">
@@ -1199,7 +1258,7 @@ export default function CoupleLudoGame() {
                 ))}
               </div>
             </div>
-            
+
             <div className="win-actions">
               <button className="skip-button" onClick={restartFromWin}>
                 <ArrowLeft size={16} />
@@ -1217,29 +1276,29 @@ export default function CoupleLudoGame() {
               <Star size={32} className="task-star" />
               <h2>{translations.game.winTaskExecution || "胜利任务执行"}</h2>
             </div>
-            
+
             <div className={`selected-task ${winner}-executor`}>
               <div className="task-executor">
-                {winner === "red" ? translations.tasks.redExecute : translations.tasks.blueExecute}
+                {(translations.tasks as any)[`${winner}Execute`]}
               </div>
               <div className="task-description-box">
                 {selectedWinTask.description}
               </div>
             </div>
-            
+
             <div className="celebration-message">
               <Heart size={24} />
               <p>{translations.game.celebrationMessage || "完成这个任务来庆祝你们的胜利！"}</p>
             </div>
-            
+
             <div className="win-task-actions">
-              <button 
+              <button
                 className="complete-win-task-btn"
                 onClick={handleWinTaskComplete}
               >
                 ✅ {translations.common.completed}
               </button>
-              <button 
+              <button
                 className="restart-btn"
                 onClick={restartFromWin}
               >

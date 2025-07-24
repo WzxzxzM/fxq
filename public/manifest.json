@@ -1,7 +1,7 @@
 {
-  "name": "波波飞行棋 - 情侣飞机棋",
+  "name": "波波飞行棋 - 飞行棋",
   "short_name": "波波飞行棋",
-  "description": "创意互动游戏增进感情神器，免费解锁所有关卡",
+  "description": "创意互动游戏增进交流神器",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -92,3 +92,74 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Player and Turn Styles */
+.player {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease-in-out;
+  border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.player.current-turn {
+  box-shadow: 0 0 15px 3px currentColor;
+}
+
+.player.stacked {
+  transform: scale(0.8);
+}
+.player.stacked:nth-child(1) { transform: translate(-15%, -15%) scale(0.8); }
+.player.stacked:nth-child(2) { transform: translate(15%, -15%) scale(0.8); }
+.player.stacked:nth-child(3) { transform: translate(-15%, 15%) scale(0.8); }
+.player.stacked:nth-child(4) { transform: translate(15%, 15%) scale(0.8); }
+
+
+.player.moving {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.player.red, .red-turn .dice, .red-executor, .red-winner, .task-card.red-executor, .win-task-card.red-winner {
+  color: #ef4444;
+  background-color: #fef2f2;
+  border-color: #ef4444;
+}
+
+.player.blue, .blue-turn .dice, .blue-executor, .blue-winner, .task-card.blue-executor, .win-task-card.blue-winner {
+  color: #3b82f6;
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.player.orange, .orange-turn .dice, .orange-executor, .orange-winner, .task-card.orange-executor, .win-task-card.orange-winner {
+  color: #f97316;
+  background-color: #fff7ed;
+  border-color: #f97316;
+}
+
+.player.purple, .purple-turn .dice, .purple-executor, .purple-winner, .task-card.purple-executor, .win-task-card.purple-winner {
+  color: #8b5cf6;
+  background-color: #f5f3ff;
+  border-color: #8b5cf6;
+}
+
+.header.red-turn, .game-container.red-turn { border-color: #ef4444; }
+.header.blue-turn, .game-container.blue-turn { border-color: #3b82f6; }
+.header.orange-turn, .game-container.orange-turn { border-color: #f97316; }
+.header.purple-turn, .game-container.purple-turn { border-color: #8b5cf6; }
+
+.turn-indicator.red { color: #ef4444; }
+.turn-indicator.blue { color: #3b82f6; }
+.turn-indicator.orange { color: #f97316; }
+.turn-indicator.purple { color: #8b5cf6; }
